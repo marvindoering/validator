@@ -39,6 +39,10 @@ import net.sf.saxon.s9api.XdmNode;
 
 public class ScenarioRepository {
 
+    public static final String DEFAULT = "default";
+
+    public static final String DEFAULT_ID = DEFAULT + "_1";
+
     private final List<Configuration> configuration;
 
     public ScenarioRepository(final Configuration... configuration) {
@@ -46,8 +50,8 @@ public class ScenarioRepository {
             throw new IllegalArgumentException("Must provide at least one configuration");
         }
         this.configuration = Arrays.asList(configuration);
-        this.configuration.forEach(v -> log.info("Loaded scenarios for {} by {} from {}. The following scenarios are available:\n\n{}",
-                v.getName(), v.getAuthor(), v.getDate(), summarizeScenarios()));
+        this.configuration.forEach(v -> log.info("Loaded scenarios for {} by {} from {}.", v.getName(), v.getAuthor(), v.getDate()));
+        log.info("The following scenarios are available:\n{}", summarizeScenarios());
     }
 
     public Scenario getFallbackScenario() {

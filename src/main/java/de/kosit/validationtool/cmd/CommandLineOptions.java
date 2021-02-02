@@ -22,6 +22,7 @@ import java.util.concurrent.Callable;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import de.kosit.validationtool.cmd.CommandLineApplication.Level;
 
@@ -36,7 +37,6 @@ import picocli.CommandLine.Parameters;
  * 
  * @author Andreas Penski
  */
-
 @Command(description = "Structural and semantic validation of xml files", name = "KoSIT Validator", mixinStandardHelpOptions = false,
          separator = " ")
 @Getter
@@ -109,6 +109,38 @@ public class CommandLineOptions implements Callable<ReturnValue> {
 
     }
 
+    /**
+     * Definition of logical name and a path for a configuration artifact.
+     * 
+     * @author Andreas Penski
+     */
+    @Getter
+    @Setter
+    public abstract static class Definition {
+
+        String name;
+
+        Path path;
+    }
+
+    /**
+     * Definition of logical name and a path for a repository.
+     * 
+     * @author Andreas Penski
+     */
+    public static class RepositoryDefinition extends Definition {
+        // just for type safety
+    }
+
+    /**
+     * Definition of logical name and a path for a scenario configuration file.
+     * 
+     * @author Andreas Penski
+     */
+    public static class ScenarioDefinition extends Definition {
+        // just for type safety
+    }
+
     @ArgGroup(exclusive = false, heading = "Daemon options\n")
     private DaemonOptions daemonOptions;
 
@@ -127,13 +159,13 @@ public class CommandLineOptions implements Callable<ReturnValue> {
     @Option(names = { "-l", "--log-level" }, description = "Enables a certain log level for debugging purposes", defaultValue = "OFF")
     private Level logLevel;
 
-    @Option(names = { "-r", "--repository" }, paramLabel = "MAP", description = "Directory containing scenario content")
-    // private final Map<String, Path> repositories = new HashMap<>();
-    private Path repositories;
+    @Option(names = { "-r", "--repository" }, paramLabel = "repository-path", description = "Directory containing scenario content",
+            converter = TypeConverter.RepositoryConverter.class)
+    private List<RepositoryDefinition> repositories;
 
     @Option(names = { "-s", "--scenarios" }, description = "Location of scenarios.xml", paramLabel = "scenario.xml", arity = "1..*",
-            required = true)
-    private List<Path> scenarios;
+            required = true, converter = TypeConverter.ScenarioConverter.class)
+    private List<ScenarioDefinition> scenarios;
 
     @Override
     public ReturnValue call() throws Exception {

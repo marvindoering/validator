@@ -121,15 +121,15 @@ public class CommandLine {
         return new String(error.getOut().toByteArray());
     }
 
-    public List<String> getOutputLines() {
+    public static List<String> getOutputLines() {
         return readLines(out.getOut().toByteArray());
     }
 
-    public List<String> getErrorLines() {
+    public static List<String> getErrorLines() {
         return readLines(error.getOut().toByteArray());
     }
 
-    private List<String> readLines(final byte[] bytes) {
+    private static List<String> readLines(final byte[] bytes) {
         try ( final ByteArrayInputStream in = new ByteArrayInputStream(bytes);
               final Reader r = new InputStreamReader(in) ) {
 

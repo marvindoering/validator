@@ -17,6 +17,7 @@
 package de.kosit.validationtool.cmd;
 
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import java.io.IOException;
@@ -30,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,6 +44,9 @@ import de.kosit.validationtool.api.Input;
 import de.kosit.validationtool.api.InputFactory;
 import de.kosit.validationtool.api.Result;
 import de.kosit.validationtool.cmd.CommandLineOptions.CliOptions;
+import de.kosit.validationtool.cmd.CommandLineOptions.Definition;
+import de.kosit.validationtool.cmd.CommandLineOptions.RepositoryDefinition;
+import de.kosit.validationtool.cmd.CommandLineOptions.ScenarioDefinition;
 import de.kosit.validationtool.cmd.assertions.Assertions;
 import de.kosit.validationtool.cmd.report.Line;
 import de.kosit.validationtool.config.ConfigurationLoader;
@@ -49,6 +54,7 @@ import de.kosit.validationtool.daemon.Daemon;
 import de.kosit.validationtool.impl.ConversionService;
 import de.kosit.validationtool.impl.EngineInformation;
 import de.kosit.validationtool.impl.Printer;
+import de.kosit.validationtool.impl.ScenarioRepository;
 import de.kosit.validationtool.impl.xml.ProcessorProvider;
 
 import net.sf.saxon.s9api.Processor;
@@ -82,6 +88,7 @@ public class Validator {
                 returnValue = processActions(cmd);
             }
         } catch (final Exception e) {
+            e.printStackTrace();
             Printer.writeErr(e.getMessage());
             if (cmd.isDebugOutput()) {
                 log.error(e.getMessage(), e);
@@ -110,11 +117,8 @@ public class Validator {
             Printer.writeErr("Mixed mode configuration detected. Use either daemon mode or cli mode commandline options. They are mutual "
                     + "exclusive. Will ignore cli mode options");
         }
-        final List<Configuration> configuration = getConfiguration(cmd).stream().map(config -> {
-
-            final Configuration c = config.build(ProcessorProvider.getProcessor());
-            return c;
-        }).collect(Collectors.toList());
+        final List<Configuration> configuration = getConfiguration(cmd).stream()
+                .map(config -> config.build(ProcessorProvider.getProcessor())).collect(Collectors.toList());
         printScenarios(configuration);
         final CommandLineOptions.DaemonOptions daemonOptions = cmd.getDaemonOptions();
         final Daemon validDaemon = new Daemon(daemonOptions.getHost(), daemonOptions.getPort(), determineThreads(daemonOptions));
@@ -173,31 +177,71 @@ public class Validator {
         return check.isSuccessful(results) ? ReturnValue.SUCCESS : ReturnValue.createFailed(check.getNotAcceptableCount(results));
     }
 
+    /**
+     * @param cmd
+     *
+     * @return
+     */
     private static List<ConfigurationLoader> getConfiguration(final CommandLineOptions cmd) {
-        return cmd.getScenarios().stream().map(s -> {
-            final URI scenarioLocation = determineDefinition(s);
-            final URI repositoryLocation = determineRepository(cmd);
+        final List<ScenarioDefinition> scenarios = defaultIfNull(cmd.getScenarios(), Collections.emptyList());
+        final Map<String, Path> mappedScenarios = scenarios.stream()
+                .collect(Collectors.toMap(ScenarioDefinition::getName, ScenarioDefinition::getPath));
+        final List<RepositoryDefinition> repos = defaultIfNull(cmd.getRepositories(), Collections.emptyList());
+        final Map<String, Path> mappedRepos = repos.stream().collect(Collectors.toMap(Definition::getName, Definition::getPath));
+        checkDuplicates(cmd.getScenarios(), cmd.getRepositories());
+        checkUnused(mappedScenarios, mappedRepos);
+
+        return mappedScenarios.entrySet().stream().map(e -> {
+            assertFileExistance(e.getValue(), "scenario");
+            final URI scenarioLocation = e.getValue().toUri();
+            final URI repositoryLocation = findRepository(e.getKey(), mappedRepos);
+
             reportConfiguration(scenarioLocation, repositoryLocation);
+
             return Configuration.load(scenarioLocation, repositoryLocation);
         }).collect(Collectors.toList());
 
     }
 
+    private static void checkUnused(final Map<String, Path> scenarios, final Map<String, Path> repositories) {
+        final List<Entry<String, Path>> unused = repositories.entrySet().stream().filter(e -> scenarios.get(e.getKey()) == null)
+                .collect(Collectors.toList());
+        unused.removeIf(e -> e.getKey().equals(ScenarioRepository.DEFAULT_ID));
+        unused.forEach(e -> {
+            Printer.writeErr("Warning: repository definition \"{0}\" is not used", e.getKey());
+        });
+    }
+
+    private static void checkDuplicates(final List<ScenarioDefinition> scenarios, final List<RepositoryDefinition> repositories) {
+
+    }
+
+    private static URI findRepository(final String key, final Map<String, Path> repositories) {
+        final Path path = repositories.getOrDefault(key, repositories.get(ScenarioRepository.DEFAULT_ID));
+        if (path == null) {
+            throw new IllegalArgumentException(String.format("No repository location for scenario definition '%s' specified", key));
+        }
+        return determineRepository(path);
+    }
+
     private static void reportConfiguration(final URI scenarioLocation, final URI repositoryLocation) {
         Printer.writeOut("Loading scenarios from  {0}", scenarioLocation);
         Printer.writeOut("Using repository  {0}", repositoryLocation);
+        Printer.writeOut(EMPTY);
     }
 
     private static void printScenarios(final List<Configuration> configurations) {
         configurations.forEach(configuration -> {
             Printer.writeOut("Loaded \"{0}\" by {1} from {2} ", configuration.getName(), configuration.getAuthor(),
                     configuration.getDate());
-            Printer.writeOut("\nThe following scenarios are available:");
+            Printer.writeOut("The following scenarios are available:");
             configuration.getScenarios().forEach(e -> {
                 final Line line = new Line(Code.GREEN);
                 line.add("  * " + e.getName());
                 Printer.writeOut(line.render(false, false));
+
             });
+            Printer.writeOut(EMPTY);
         });
     }
 
@@ -280,25 +324,20 @@ public class Validator {
 
     }
 
-    private static URI determineRepository(final CommandLineOptions cmd) {
-        if (cmd.getRepositories() != null) {
-            final Path d = cmd.getRepositories();
-            if (Files.isDirectory(d)) {
-                return d.toUri();
-            } else {
-                throw new IllegalArgumentException(
-                        String.format("Not a valid path for repository definition specified: '%s'", d.toAbsolutePath()));
-            }
-        }
-        return null;
-    }
-
-    private static URI determineDefinition(final Path f) {
-        if (Files.isRegularFile(f)) {
-            return f.toAbsolutePath().toUri();
+    private static URI determineRepository(final Path d) {
+        if (Files.isDirectory(d)) {
+            return d.toUri();
         } else {
             throw new IllegalArgumentException(
-                    String.format("Not a valid path for scenario definition specified: '%s'", f.toAbsolutePath()));
+                    String.format("Not a valid path for repository definition specified: '%s'", d.toAbsolutePath()));
+        }
+
+    }
+
+    private static void assertFileExistance(final Path f, final String type) {
+        if (!Files.isRegularFile(f)) {
+            throw new IllegalArgumentException(
+                    String.format("Not a valid path for %s definition specified: '%s'", type, f.toAbsolutePath()));
         }
     }
 

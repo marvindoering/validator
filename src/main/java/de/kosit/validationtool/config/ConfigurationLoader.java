@@ -164,10 +164,10 @@ public class ConfigurationLoader {
     }
 
     private Scenarios loadScenarios(final Schema scenarioSchema, final Processor processor) {
-        final ConversionService conversionService = new ConversionService();
         checkVersion(this.scenarioDefinition, processor);
         log.info("Loading scenarios from {}", this.scenarioDefinition);
         final CollectingErrorEventHandler handler = new CollectingErrorEventHandler();
+        final ConversionService conversionService = new ConversionService();
         final Scenarios scenarios = conversionService.readXml(this.scenarioDefinition, Scenarios.class, scenarioSchema, handler);
         if (!handler.hasErrors()) {
             log.info("Loading scenario content from {}", this.getScenarioRepository());
