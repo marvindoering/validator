@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020  Koordinierungsstelle für IT-Standards (KoSIT)
+ * Copyright 2017-2021  Koordinierungsstelle für IT-Standards (KoSIT)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class CommandLineApplication {
     private static void sayGoodby(final ReturnValue resultStatus) {
         Printer.writeOut("\n##############################");
         if (resultStatus.equals(ReturnValue.SUCCESS)) {
-            Printer.writeOut("#   " + new Line(Code.GREEN).add("Validation succesful!").render(false, false) + "    #");
+            Printer.writeOut("#   " + new Line(Code.GREEN).add("Validation successful!").render(false, false) + "   #");
         } else {
             Printer.writeOut("#     " + new Line(Code.RED).add("Validation failed!").render(false, false) + "     #");
         }

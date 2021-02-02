@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020  Koordinierungsstelle für IT-Standards (KoSIT)
+ * Copyright 2017-2021  Koordinierungsstelle für IT-Standards (KoSIT)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ public class InputFactory {
         try {
             return read(uri.toURL(), digestAlgorithm);
         } catch (final MalformedURLException e) {
-            throw new IllegalArgumentException(String.format("Can not read from uri %s Not a valid uri supplied", uri));
+            throw new IllegalArgumentException(String.format("URL invalid or protocol not supported: %s", uri), e);
         }
     }
 
@@ -149,7 +149,7 @@ public class InputFactory {
     }
 
     /**
-     * Liest einen Prüfling von der übergebenen URL. Es wird ein definierter Algorithmis zur Ermittlung der Prüfsumme
+     * Liest einen Prüfling von der übergebenen URL. Es wird ein definierter Algorithmus zur Ermittlung der Prüfsumme
      * genutzt.
      * 
      * @param url URL des Prüflings

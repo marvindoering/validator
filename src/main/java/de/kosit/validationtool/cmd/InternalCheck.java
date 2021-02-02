@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020  Koordinierungsstelle für IT-Standards (KoSIT)
+ * Copyright 2017-2021  Koordinierungsstelle für IT-Standards (KoSIT)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,8 @@ import de.kosit.validationtool.impl.tasks.CheckAction;
 import net.sf.saxon.s9api.Processor;
 
 /**
- * Simple Erweiterung der Klasse {@link DefaultCheck} um das Ergebnis der Assertion-Prüfung auszwerten und auszugeben.
- * Diese Klasse stellt keine fachlicher Erweiterung des eigentlichen Prüfvorganges dar!
+ * Simple Erweiterung der Klasse {@link DefaultCheck} um das Ergebnis der Assertion-Prüfung auszuwerten und auszugeben.
+ * Diese Klasse stellt keine fachliche Erweiterung des eigentlichen Prüfvorganges dar!
  * 
  * @author Andreas Penski
  */

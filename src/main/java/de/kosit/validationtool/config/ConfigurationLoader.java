@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020  Koordinierungsstelle für IT-Standards (KoSIT)
+ * Copyright 2017-2021  Koordinierungsstelle für IT-Standards (KoSIT)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmNodeKind;
 
 /**
- * Configuration class that loads neccessary {@link Check} configuration from an existing scenario.xml specification.
+ * Configuration class that loads necessary {@link Check} configuration from an existing scenario.xml specification.
  * This is the recommended option when an official configuration exists as is the case with 'xrechnung'.
  * 
  * @author Andreas Penski

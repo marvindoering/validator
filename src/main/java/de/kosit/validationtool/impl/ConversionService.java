@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020  Koordinierungsstelle für IT-Standards (KoSIT)
+ * Copyright 2017-2021  Koordinierungsstelle für IT-Standards (KoSIT)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ public class ConversionService {
     }
 
     /**
-     * Unmarshalls a specifc xml model into a defined java object.
+     * Unmarshalls a specific XML model into a defined Java object.
      *
      * @param xml the xml
      * @param type the expected type created

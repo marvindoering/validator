@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020  Koordinierungsstelle für IT-Standards (KoSIT)
+ * Copyright 2017-2021  Koordinierungsstelle für IT-Standards (KoSIT)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import de.kosit.validationtool.impl.xml.StrictRelativeResolvingStrategy;
 public enum ResolvingMode {
 
     /**
-     * Resolving using only the configured content repository. No furthing resolving allowed. This
+     * Resolving using only the configured content repository.
      */
     STRICT_RELATIVE(new StrictRelativeResolvingStrategy()) {
 
