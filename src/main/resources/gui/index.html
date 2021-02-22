@@ -25,70 +25,49 @@
 
     <style>
 
-        #result {
+        #result_0 {
             border: 1pt solid black;
             margin-top: 20px
         }
 
-        #result:empty {
+        #result_0:empty {
             display: none;
         }
 
+        .result {
+            border: 1pt solid black;
+            margin-top: 20px
+        }
+
+        .result:empty {
+            display: none;
+        }
 
     </style>
 </head>
 <body>
 <script type="text/javascript">
+  let fileName = [];
+  let fileNumber = 0;
 
   var validate = function validate() {
-    const input = document.getElementById('file');
-    const output_bad_status = document.getElementById('bad_status');
-    const output_good_status = document.getElementById('good_status');
-    const output_result = document.getElementById('result');
-    const download = document.getElementById('dwn-btn');
 
-    // Reset all variables
-    output_bad_status.innerText = "";
-    output_good_status.innerText = "";
-    download.disabled = true;
-    output_result.innerText = "";
+    reset();
+    doProcessing();
 
-    var headers = new Headers();
-    headers.append('Content-Type', 'application/xml');
-
-    var requestOptions = {
-      method: 'POST',
-      headers: headers,
-      body: input.files[0],
-      redirect: 'follow',
-    };
-
-    fetch('/', requestOptions)
-      .then(response => {
-          let status = response.status + " " + response.statusText;
-          if(response.status === 200) {
-              output_good_status.innerText = status;
-          } else {
-              output_bad_status.innerText = status;
-          }
-          response.text().then(result => {
-              output_result.innerText = result;
-              download.disabled = false;
-          })
-          response.text().catch(error => output_result.innerText = error);
-      })
     return false;
   };
 
-  let download = function download() {
-    const result = document.getElementById('result');
-    const filename = "report.html";
+  let download = function download(downloadButton) {
+    let downloadID = downloadButton.match(/(\d+)/)[0];
+    const result = document.getElementById('result_'+downloadID);
+    const filename = fileName[downloadID]+"_report.html";
     const element = document.createElement('a');
 
     // Check if there is a report to download
     if(result.innerText !== "") {
         // Extraction of HTML Result from div-box "result"
-        let html_result = new DOMParser().parseFromString(result.innerText, "text/html");
+        let html_result = new DOMParser().parseFromString(result.innerHTML, "text/html");
         // Eliminate the abundance
         html_result = html_result.documentElement.innerHTML.replace(/<rep:report (.+)><rep:explanation>/, "");
 
@@ -103,6 +82,73 @@
         document.body.removeChild(element);
     }
   };
+
+  function doProcessing() {
+      const input = document.getElementById('files');
+      const output_results = document.getElementById('results');
+      const download = document.getElementById('dwn-btn_0');
+
+      let headers = new Headers();
+      headers.append('Content-Type', 'application/xml');
+
+      fileNumber = input.files.length;
+
+      for (let i = 0; i < input.files.length; i++) {
+          fileName[i] = input.files[i].name.replace(/(\.xml)$/, "");
+          var requestOptions = {
+              method: 'POST',
+              headers: headers,
+              body: input.files[i],
+              redirect: 'follow',
+          };
+
+          download.hidden = false;
+
+          if(i !== 0) {
+              let createDiv = document.createElement('div');
+              createDiv.setAttribute('id', "result_"+i);
+              createDiv.setAttribute('class', "result");
+              output_results.appendChild(createDiv);
+
+              let createDownloadButton = document.createElement('input');
+              createDownloadButton.type = 'button'
+              createDownloadButton.id = 'dwn-btn_'+i;
+              createDownloadButton.setAttribute('onclick', "return download('dwn-btn_"+i+"');")
+              createDownloadButton.value = 'Download Report for '+ fileName[i];
+              output_results.appendChild(createDownloadButton);
+
+              fetch('/', requestOptions)
+                  .then(response => response.text())
+                  .then(result => {
+                      document.getElementById('result_'+i).innerHTML = result.replace(/<rep:report (.+)><rep:explanation>/, "");
+                  })
+                  .catch(error => document.getElementById('result_'+i).innerHTML = error);
+          } else {
+              fetch('/', requestOptions)
+                  .then(response => response.text())
+                  .then(result => {
+                      document.getElementById('result_0').innerHTML = result.replace(/<rep:report (.+)><rep:explanation>/, "");
+                  })
+                  .catch(error => document.getElementById('result_0').innerHTML = error);
+          }
+      }
+      return false;
+  }
+
+  function reset() {
+      const output_result = document.getElementById('result_0');
+      const download = document.getElementById('dwn-btn_0');
+
+      // Reset all variables
+      output_result.innerText = "";
+      download.hidden = true;
+
+      for(let i = 1; i < fileNumber; i++) {
+          document.getElementById('result_'+i).remove();
+          document.getElementById('dwn-btn_'+i).remove();
+      }
+      return false;
+  }
 
 </script>
 
